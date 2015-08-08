@@ -1,0 +1,19 @@
+{
+  "name": "queryT",
+  "version": "0.1.0",
+  "description": "Query Template engine.",
+  "author": "Mihai Slobozeanu <mihaislobozeanu@gmail.com>",
+  "contributors": [],
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mihaislobozeanu/queryt"
+  },
+  "keywords": [
+    "sql",
+    "query",
+    "template",
+    "parameterized"
+  ],
+  "license": "MIT"
+}
