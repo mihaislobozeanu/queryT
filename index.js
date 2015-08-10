@@ -7,12 +7,11 @@
         tokens: {
             start: '[[',
             end: ']]',
-            and: 'AND',
-            or: 'OR',
             alternative: {
                 start: '{{',
                 end: '}}'
-            }
+            },
+            separators:[',', 'AND', 'OR']
         }
     }, _globals = (function () {
         return this || (0, eval)("this");
@@ -37,18 +36,24 @@
         return escaped;
     }
 
+    function getSeparatorsExpression(separators){
+        return separators.map(function(s){
+            return escapeToken(s);
+        }).join('|');
+    };
+
     queryT.template = function (template, options) {
         var options = options || {},
             tokens = options.tokens || this.tokens,
             originalRe = new RegExp(escapeToken(tokens.start) + "([\\s\\S]+?)" + escapeToken(tokens.end), 'g'),
             alternativeRe = new RegExp(escapeToken(tokens.alternative.start) + "([\\s\\S]+?)" + escapeToken(tokens.alternative.end), 'g'),
             alternateRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g'),
-            logicalOperatorsRe = new RegExp('^(' + tokens.and + '|' + tokens.or + ')', 'gi'),
+            separatorsRe = new RegExp('^(' + getSeparatorsExpression(tokens.separators) + ')', 'gi'),
             parametersRe = /\@([^\!\"\#\$\%\&\'\(\)\*\+\,\.\/\:\;\<\=\>\?\@\^\`\{\|\}\-\~\s\']+)/g;
         template = alternate(template, tokens);
 
-        if (typeof options.matchParameter !== "function") {
-            options.matchParameter = function (name, index) {
+        if (typeof options.rewriteParameter !== "function") {
+            options.rewriteParameter = function (name, index) {
                 return name;
             };
         }
@@ -101,7 +106,7 @@
                         return '';
                     }
                     if (previousMatched === false) {
-                        match = trimLogicalOperators(match);
+                        match = trimSeparators(match);
                     }
                     matched = true;
                     previousMatched = true;
@@ -125,7 +130,7 @@
                         return '';
                     }
                     if (previousMatched === false) {
-                        match = trimLogicalOperators(match);
+                        match = trimSeparators(match);
                     }
                     matched = true;
                     previousMatched = true;
@@ -137,8 +142,8 @@
             };
         }
 
-        function trimLogicalOperators(str) {
-            return str.replace(logicalOperatorsRe, function (match) {
+        function trimSeparators(str) {
+            return str.replace(separatorsRe, function (match) {
                 return '';
             }).trim();
         }
@@ -156,15 +161,15 @@
             return resolvedMatches === allMatches;
         }
 
-        function matchParameters(str) {
+        function rewriteParameters(str) {
             var parameterIndex = 0;
             return str.replace(parametersRe, function (match) {
-                return options.matchParameter(match, parameterIndex++);
+                return options.rewriteParameter(match, parameterIndex++);
             });
         }
 
         var response = replaceOriginal(template);
-        return matchParameters(response.result);
+        return rewriteParameters(response.result);
     }
 
 }());
