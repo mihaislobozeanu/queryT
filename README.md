@@ -93,7 +93,7 @@ Suppose the @Field1 parameter is not available, but @Field2 and @Field3 are. The
 
 ```
 SELECT * FROM Table
-WHERE Field2 = @Field2
+WHERE Field2 = @Field2 AND Field3 = @Field3
 ```
 
 Notice that the 'AND' separator was removed from ```[[AND Field2 = @Field2]]```, but not from ```[[AND Field3 = @Field3]]```.
