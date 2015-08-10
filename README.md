@@ -120,6 +120,79 @@ var result = queryT.template(template, options);
 SELECT * FROM Table WHERE Field1 = @Param1 AND Field3 = @Param3
 ```
 
+## Parameters rewriting
+
+Not all sql server have the same notation rule for parameters. For example, in MySql the notation for parameters is '?'.
+In this case, the rewriteParameter function should be provided.
+
+```
+var parameters = ['@Param1', '@Param3'],
+    template = 'SELECT * FROM Table [[WHERE [[Field1 = @Param1]] [[AND Field2 = @Param2]] [[AND Field3 = @Param3]]]]',
+    options = {
+        hasParameter : function(name){
+            return parameters.indexOf(name) !== -1;
+        },
+        rewriteParameter : function(name, index){
+            return '?';
+        }
+    };
+var result = queryT.template(template, options);
+```
+
+### Result
+
+```
+SELECT * FROM Table WHERE Field1 = ? AND Field3 = ?
+```
+
+## Joins
+
+```
+var parameters = ['@Param1', '@Param3'],
+    template = 'SELECT * FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]',
+    options = {
+        hasParameter : function(name){
+            return parameters.indexOf(name) !== -1;
+        },
+        rewriteParameter : function(name, index){
+            return name;
+        }
+    };
+var result = queryT.template(template, options);
+```
+
+### Result
+
+```
+SELECT * FROM Table WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3
+```
+
+## Fields on select clause depending on parameters
+
+For fields, an workaround is needed.
+
+```
+var parameters = ['@Param1', '@Param3'],
+    template = 'SELECT Table.*[[, Table2.Field2 @Param2Field]] FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]',
+    options = {
+        hasParameter : function(name){
+            return (parameters.indexOf(name) >= 0) || (parameters.indexOf(name + 'Field') >= 0);
+        },
+        rewriteParameter : function(name, index){
+            if (name.substr(-5) === 'Field')
+                return '';
+            return name;
+        }
+    };
+var result = queryT.template(template, options);
+```
+
+### Result
+
+```
+SELECT Table.* FROM Table WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3
+```
+
 ## Author
 Mihai Slobozeanu
 

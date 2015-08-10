@@ -11,7 +11,7 @@
                 start: '{{',
                 end: '}}'
             },
-            separators:[',', 'AND', 'OR']
+            separators: [',', 'AND', 'OR']
         }
     }, _globals = (function () {
         return this || (0, eval)("this");
@@ -36,8 +36,8 @@
         return escaped;
     }
 
-    function getSeparatorsExpression(separators){
-        return separators.map(function(s){
+    function getSeparatorsExpression(separators) {
+        return separators.map(function (s) {
             return escapeToken(s);
         }).join('|');
     };
@@ -97,12 +97,16 @@
         function replaceOriginal(str) {
             var matched = false,
                 previousMatched = false,
+                matchesFound = 0,
                 result = str.replace(originalRe, function (match) {
+                    matchesFound++;
                     match = stripOriginal(match);
-                    var response = replaceAlternative(match);
-                    if (response.matched) {
-                        match = response.result;
-                    } else if (!hasParameters(match)) {
+                    var response = replaceAlternative(match),
+                        matchedParameters;
+
+                    match = response.result;
+                    matchedParameters = matchParameters(match);
+                    if ((matchedParameters === -1) || (matchedParameters === 0 && !response.matched)) {
                         return '';
                     }
                     if (previousMatched === false) {
@@ -113,7 +117,7 @@
                     return match;
                 });
             return {
-                matched: matched,
+                matched: matchesFound === 0 || matched,
                 result: result
             };
         }
@@ -121,12 +125,16 @@
         function replaceAlternative(str) {
             var matched = false,
                 previousMatched = false,
+                matchesFound = 0,
                 result = str.replace(alternativeRe, function (match) {
+                    matchesFound++;
                     match = stripAlternative(match);
-                    var response = replaceOriginal(match);
-                    if (response.matched) {
-                        match = response.result;
-                    } else if (!hasParameters(match)) {
+                    var response = replaceOriginal(match),
+                        matchedParameters;
+
+                    match = response.result;
+                    matchedParameters = matchParameters(match);
+                    if ((matchedParameters === -1) || (matchedParameters === 0 && !response.matched)) {
                         return '';
                     }
                     if (previousMatched === false) {
@@ -137,7 +145,7 @@
                     return match;
                 });
             return {
-                matched: matched,
+                matched: matchesFound === 0 || matched,
                 result: result
             };
         }
@@ -148,17 +156,19 @@
             }).trim();
         }
 
-        function hasParameters(str) {
+        function matchParameters(str) {
             var allMatches = 0,
-                resolvedMatches = 0;
-
-            str.match(parametersRe).forEach(function (match) {
-                allMatches++;
-                if (options.hasParameter(match) === true) {
-                    resolvedMatches++;
-                }
-            });
-            return resolvedMatches === allMatches;
+                resolvedMatches = 0,
+                matches = str.match(parametersRe);
+            if (matches && matches.length) {
+                matches.forEach(function (match) {
+                    allMatches++;
+                    if (options.hasParameter(match) === true) {
+                        resolvedMatches++;
+                    }
+                });
+            }
+            return (resolvedMatches === allMatches) ? allMatches : -1;
         }
 
         function rewriteParameters(str) {

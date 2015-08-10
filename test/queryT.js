@@ -15,20 +15,45 @@ var queryT = require("./../index.js"),
 function createOptions(parameters) {
     return {
         hasParameter: function (name) {
-            return (parameters.indexOf(name) >= 0);
+            return (parameters.indexOf(name) >= 0) || (parameters.indexOf(name + 'Field') >= 0);
+        },
+
+        rewriteParameters: function (name) {
+            if (name.substr(-5) === 'Field')
+                return '';
+            return name;
         }
     };
 }
 
 describe("queryT", function () {
-    it("1", function () {
+    it("evaluation without parameters", function () {
+        queryT.template('SELECT * FROM [[Test]]').should.equal('SELECT * FROM Test');
+    });
+
+    it("no parameters passed", function () {
         queryT.template('SELECT * FROM Test [[WHERE [[TestId = @TestId]]]]').should.equal('SELECT * FROM Test ');
         queryT.template('SELECT * FROM Test [[WHERE [[TestId = @TestId]] [[AND Test2Id = @Test2Id]]]]').should.equal('SELECT * FROM Test ');
     });
 
-    it("2", function () {
+    it("with parameters", function () {
         var template = 'SELECT * FROM Test [[WHERE [[TestId = @TestId]] [[AND Test2Id = @Test2Id]]]]';
         queryT.template(template, createOptions(['@TestId'])).should.equal('SELECT * FROM Test WHERE TestId = @TestId');
         queryT.template(template, createOptions(['@Test2Id'])).should.equal('SELECT * FROM Test WHERE  Test2Id = @Test2Id');
+        queryT.template(template, createOptions(['@TestId', '@Test2Id'])).should.equal('SELECT * FROM Test WHERE TestId = @TestId AND Test2Id = @Test2Id');
+
+        template = 'SELECT * FROM Test [[WHERE TestId = @TestId [[AND Test2Id = @Test2Id]]]]';
+        queryT.template(template, createOptions(['@TestId'])).should.equal('SELECT * FROM Test WHERE TestId = @TestId');
+        queryT.template(template, createOptions(['@Test2Id'])).should.equal('SELECT * FROM Test ');
+    });
+
+    it("joins", function () {
+        var template = 'SELECT * FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]';
+        queryT.template(template, createOptions(['@Param1', '@Param3'])).should.equal('SELECT * FROM Table  WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3');
+    });
+
+    it("fields", function () {
+        var template = 'SELECT Table.*[[, Table2.Field2 @Param2Field]] FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]';
+        queryT.template(template, createOptions(['@Param1', '@Param3'])).should.equal('SELECT Table.* FROM Table  WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3');
     });
 });

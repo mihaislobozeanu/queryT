@@ -1,3 +1,8 @@
+# 0.2.0
+- Bugs fixes
+- More tests
+- Documentation update
+
 # 0.1.2
 - Documentation fixes
 
