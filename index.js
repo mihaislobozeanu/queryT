@@ -100,15 +100,12 @@
                 matchesFound = 0,
                 result = str.replace(originalRe, function (match) {
                     matchesFound++;
-                    match = stripOriginal(match);
-                    var response = replaceAlternative(match),
-                        matchedParameters;
+                    var response = matchParameters(replaceAlternative(stripOriginal(match)));
 
-                    match = response.result;
-                    matchedParameters = matchParameters(match);
-                    if ((matchedParameters === -1) || (matchedParameters === 0 && !response.matched)) {
+                    if (!response.matched) {
                         return '';
                     }
+                    match = response.result;
                     if (previousMatched === false) {
                         match = trimSeparators(match);
                     }
@@ -128,15 +125,12 @@
                 matchesFound = 0,
                 result = str.replace(alternativeRe, function (match) {
                     matchesFound++;
-                    match = stripAlternative(match);
-                    var response = replaceOriginal(match),
-                        matchedParameters;
+                    var response = matchParameters(replaceOriginal(stripAlternative(match)));
 
-                    match = response.result;
-                    matchedParameters = matchParameters(match);
-                    if ((matchedParameters === -1) || (matchedParameters === 0 && !response.matched)) {
+                    if (!response.matched) {
                         return '';
                     }
+                    match = response.result;
                     if (previousMatched === false) {
                         match = trimSeparators(match);
                     }
@@ -156,10 +150,10 @@
             }).trim();
         }
 
-        function matchParameters(str) {
+        function matchParameters(request) {
             var allMatches = 0,
                 resolvedMatches = 0,
-                matches = str.match(parametersRe);
+                matches = request.result.match(parametersRe);
             if (matches && matches.length) {
                 matches.forEach(function (match) {
                     allMatches++;
@@ -167,8 +161,12 @@
                         resolvedMatches++;
                     }
                 });
+                return {
+                    matched:(resolvedMatches === allMatches),
+                    result: request.result
+                }
             }
-            return (resolvedMatches === allMatches) ? allMatches : -1;
+            return request;
         }
 
         function rewriteParameters(str) {

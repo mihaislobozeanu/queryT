@@ -1,5 +1,5 @@
 # queryT
-> A query text builder that depends upon the available query parameters. queryT.js is small and has no dependencies and it is inspired by the simplicity and efficiency of the [doT](http://olado.github.io/doT/index.html).
+> A query text builder that depends upon the available query parameters. queryT.js is small, it has no dependencies and it is inspired by the simplicity and efficiency of the [doT](http://olado.github.io/doT/index.html).
 
 ## Tokens
 
@@ -100,7 +100,7 @@ Notice that the 'AND' separator was removed from ```[[AND Field2 = @Field2]]```,
 
 ## Usage
 
-```
+```javascript
 var parameters = ['@Param1', '@Param3'],
     template = 'SELECT * FROM Table [[WHERE [[Field1 = @Param1]] [[AND Field2 = @Param2]] [[AND Field3 = @Param3]]]]',
     options = {
@@ -125,7 +125,7 @@ SELECT * FROM Table WHERE Field1 = @Param1 AND Field3 = @Param3
 Not all sql server have the same notation rule for parameters. For example, in MySql the notation for parameters is '?'.
 In this case, the rewriteParameter function should be provided.
 
-```
+```javascript
 var parameters = ['@Param1', '@Param3'],
     template = 'SELECT * FROM Table [[WHERE [[Field1 = @Param1]] [[AND Field2 = @Param2]] [[AND Field3 = @Param3]]]]',
     options = {
@@ -147,7 +147,7 @@ SELECT * FROM Table WHERE Field1 = ? AND Field3 = ?
 
 ## Joins
 
-```
+```javascript
 var parameters = ['@Param1', '@Param3'],
     template = 'SELECT * FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]',
     options = {
@@ -171,7 +171,7 @@ SELECT * FROM Table WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3
 
 For fields, an workaround is needed.
 
-```
+```javascript
 var parameters = ['@Param1', '@Param3'],
     template = 'SELECT Table.*[[, Table2.Field2 @Param2Field]] FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]',
     options = {

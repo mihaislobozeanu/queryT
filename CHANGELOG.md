@@ -1,3 +1,7 @@
+# 0.2.1
+- Minor code refactor
+- Documentation fixes
+
 # 0.2.0
 - Bugs fixes
 - More tests
