@@ -33,6 +33,8 @@ describe("queryT", function () {
 
     it("no parameters passed", function () {
         queryT.template('SELECT * FROM Test [[WHERE [[TestId = @TestId]]]]').should.equal('SELECT * FROM Test ');
+        queryT.template('SELECT * FROM Test WHERE TestId = 0 [[AND TestId = @TestId]]').should.equal('SELECT * FROM Test WHERE TestId = 0 ');
+        queryT.template('SELECT * FROM Test WHERE [[TestId IS NULL]] [[AND TestId = @TestId]]').should.equal('SELECT * FROM Test WHERE TestId IS NULL ');
         queryT.template('SELECT * FROM Test [[WHERE [[TestId = @TestId]] [[AND Test2Id = @Test2Id]]]]').should.equal('SELECT * FROM Test ');
     });
 
@@ -45,6 +47,9 @@ describe("queryT", function () {
         template = 'SELECT * FROM Test [[WHERE TestId = @TestId [[AND Test2Id = @Test2Id]]]]';
         queryT.template(template, createOptions(['@TestId'])).should.equal('SELECT * FROM Test WHERE TestId = @TestId');
         queryT.template(template, createOptions(['@Test2Id'])).should.equal('SELECT * FROM Test ');
+
+        template = 'SELECT * FROM Test [[WHERE [[TestId IS NULL]] [[AND Test1Id = @Test1Id]]]]';
+        queryT.template(template, createOptions(['@Test1Id'])).should.equal('SELECT * FROM Test WHERE TestId IS NULL AND Test1Id = @Test1Id');
     });
 
     it("joins", function () {

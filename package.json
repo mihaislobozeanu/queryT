@@ -5,6 +5,9 @@
   "author": "Mihai Slobozeanu <mihaislobozeanu@gmail.com>",
   "contributors": [],
   "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive --timeout 259200000 test"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/mihaislobozeanu/queryT"
