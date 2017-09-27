@@ -7,10 +7,6 @@
         tokens: {
             start: '[[',
             end: ']]',
-            alternative: {
-                start: '{{',
-                end: '}}'
-            },
             separators: [',', 'AND', 'OR']
         }
     }, _globals = (function () {
@@ -45,12 +41,8 @@
     queryT.template = function (template, options) {
         var options = options || {},
             tokens = options.tokens || this.tokens,
-            originalRe = new RegExp(escapeToken(tokens.start) + "([\\s\\S]+?)" + escapeToken(tokens.end), 'g'),
-            alternativeRe = new RegExp(escapeToken(tokens.alternative.start) + "([\\s\\S]+?)" + escapeToken(tokens.alternative.end), 'g'),
-            alternateRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g'),
             separatorsRe = new RegExp('^(' + getSeparatorsExpression(tokens.separators) + ')', 'gi'),
-            parametersRe = /\@([^\!\"\#\$\%\&\'\(\)\*\+\,\.\/\:\;\<\=\>\?\@\^\`\{\|\}\-\~\s\']+)/g;
-        template = alternate(template, tokens);
+            parametersRe = /\@([^\!\"\#\$\%\&\'\(\)\*\+\,\.\/\:\;\<\=\>\?\@\^\`\{\|\}\[\]\-\~\s\']+)/g;
 
         if (typeof options.rewriteParameter !== "function") {
             options.rewriteParameter = function (name, index) {
@@ -63,23 +55,26 @@
             };
         }
 
-        function alternate(template) {
-            var depth = 0;
-
-            return template.replace(alternateRe, function (match) {
-                if (match === tokens.start) {
-                    if (depth % 2 === 1) {
-                        match = tokens.alternative.start;
-                    }
-                    depth++;
-                } else if (match === tokens.end) {
-                    depth--;
-                    if (depth % 2 === 1) {
-                        match = tokens.alternative.end;
-                    }
+        function replace(str, tokens, fn) {
+            var match, result = '',
+                tokensRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g'),
+                startIndex = 0, endIndex = 0,
+                depth = 0;
+            while (match = tokensRe.exec(str)) {
+                if (depth === 0) {
+                    startIndex = match.index;
+                    result += str.substring(endIndex, startIndex);
                 }
-                return match;
-            });
+                match[0] === tokens.start && depth++;
+                match[0] === tokens.end && depth--;
+
+                if (depth === 0) {
+                    endIndex = match.index + tokens.end.length;
+                    result += fn(str.substring(startIndex, endIndex));
+                }
+            }
+            result += str.substring(endIndex);
+            return result;
         }
 
         function stripOriginal(str) {
@@ -88,56 +83,25 @@
             return str.substr(start, length);
         }
 
-        function stripAlternative(str) {
-            var start = tokens.alternative.start.length,
-                length = str.length - tokens.alternative.end.length - start;
-            return str.substr(start, length);
-        }
-
         function replaceOriginal(str) {
             var matched = false,
                 previousMatched = false,
-                matchesFound = 0,
-                result = str.replace(originalRe, function (match) {
-                    matchesFound++;
-                    var response = matchParameters(replaceAlternative(stripOriginal(match)));
+                matchesFound = 0;
+            var result = replace(str, tokens, function (match) {
+                matchesFound++;
+                var response = matchParameters(replaceOriginal(stripOriginal(match)));
 
-                    if (!response.matched) {
-                        return '';
-                    }
-                    match = response.result;
-                    if (previousMatched === false) {
-                        match = trimSeparators(match);
-                    }
-                    matched = true;
-                    previousMatched = true;
-                    return match;
-                });
-            return {
-                matched: matchesFound === 0 || matched,
-                result: result
-            };
-        }
-
-        function replaceAlternative(str) {
-            var matched = false,
-                previousMatched = false,
-                matchesFound = 0,
-                result = str.replace(alternativeRe, function (match) {
-                    matchesFound++;
-                    var response = matchParameters(replaceOriginal(stripAlternative(match)));
-
-                    if (!response.matched) {
-                        return '';
-                    }
-                    match = response.result;
-                    if (previousMatched === false) {
-                        match = trimSeparators(match);
-                    }
-                    matched = true;
-                    previousMatched = true;
-                    return match;
-                });
+                if (!response.matched) {
+                    return '';
+                }
+                match = response.result;
+                if (previousMatched === false) {
+                    match = trimSeparators(match);
+                }
+                matched = true;
+                previousMatched = true;
+                return match;
+            });
             return {
                 matched: matchesFound === 0 || matched,
                 result: result
@@ -162,7 +126,7 @@
                     }
                 });
                 return {
-                    matched:(resolvedMatches === allMatches),
+                    matched: (resolvedMatches === allMatches),
                     result: request.result
                 }
             }

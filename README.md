@@ -7,10 +7,6 @@
 queryT.tokens = {
   start: '[[',                          //evaluation start token
   end: ']]',                            //evaluation end token
-  alternative: {                        //tokens to be used by the engine to alternate tokens in depth.
-      start: '{{',                      //alternate start token
-      end: '}}'                         //alternate end token
-  },
   separators:[',', 'AND', 'OR']         //a list of separators
 };
 ```
@@ -47,36 +43,6 @@ if both parameters are passed then the result will be:
 SELECT * FROM Table
 WHERE Field1 = @Field1 AND Field2 = @Field2
 ```
-
-### Alternate
-
-To support inner evaluations, the engine has to alternate tokens in depth. Therefore, alternative tokens must be provided.
-
-```
-SELECT * FROM Table
-[[WHERE [[Field1 = @Field1]] [[AND Field2 = @Field2]]]]
-```
-
-will become
-
-```
-SELECT * FROM Table
-[[WHERE {{Field1 = @Field1}} {{AND Field2 = @Field2}}]]
-```
-
-
-```
-SELECT * FROM Table
-[[WHERE [[Field1 = @Field1]] [[AND ([[Field2 = @Field2]] [[OR Field3 = @Field3]])]]]]
-```
-
-will become
-
-```
-SELECT * FROM Table
-[[WHERE {{Field1 = @Field1}} {{AND ([[Field2 = @Field2]] [[OR Field3 = @Field3]])}}]]
-```
-
 ### Separators
 
 Separators helps composing a correct statement. In an evaluation, each sub-evaluation depends on previous sub-evaluations.

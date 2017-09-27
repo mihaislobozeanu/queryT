@@ -1,6 +1,6 @@
 {
   "name": "queryt",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Query Template engine.",
   "author": "Mihai Slobozeanu <mihaislobozeanu@gmail.com>",
   "contributors": [],
@@ -19,7 +19,11 @@
     "parameterized"
   ],
   "license": "MIT",
-  "publishConfig":{
-    "registry":"http://registry.npmjs.org/"
+  "publishConfig": {
+    "registry": "http://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "mocha": "^3.5.3",
+    "should": "^13.1.0"
   }
 }

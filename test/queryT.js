@@ -61,4 +61,9 @@ describe("queryT", function () {
         var template = 'SELECT Table.*[[, Table2.Field2 @Param2Field]] FROM Table [[LEFT JOIN Table2 ON Table.Field1 = Table2.Field1 AND Table2.Field2 = @Param2]] [[WHERE [[Table1.Field1 = @Param1]] [[AND Table1.Field2 = @Param3]]]]';
         queryT.template(template, createOptions(['@Param1', '@Param3'])).should.equal('SELECT Table.* FROM Table  WHERE Table1.Field1 = @Param1 AND Table1.Field2 = @Param3');
     });
+
+    it("production case 1", function () {
+        var template = '[[WHERE ([[T1.active = @active]] [[OR T1.county_id = @county_id]]) [[AND T1.country_id = @country_id]]]]';
+        queryT.template(template, createOptions(['@active', '@county_id', '@country_id'])).should.equal('WHERE (T1.active = @active OR T1.county_id = @county_id) AND T1.country_id = @country_id');
+    });
 });

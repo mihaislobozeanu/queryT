@@ -1,3 +1,8 @@
+# 0.3
+- Removed alternated tokens
+- Fixed in-depth match 
+- Documentation updated
+
 # 0.2.1
 - Minor code refactor
 - Documentation fixes
