@@ -1,9 +1,9 @@
 /**
- * Created by mihai on 8/7/2015.
+ * Created by mihai on 2015.07.08.
  */
 
 (function () {
-    var queryT = {
+    const queryT = {
         tokens: {
             start: '[[',
             end: ']]',
@@ -24,7 +24,7 @@
     }
 
     function escapeToken(token) {
-        var index = 0,
+        let index = 0,
             escaped = "";
         while (index < token.length) {
             escaped += "\\" + token[index++];
@@ -39,8 +39,10 @@
     };
 
     queryT.template = function (template, options) {
-        var options = options || {},
-            tokens = options.tokens || this.tokens,
+
+        options = options || {};
+
+        const tokens = options.tokens || this.tokens,
             separatorsRe = new RegExp('^(' + getSeparatorsExpression(tokens.separators) + ')', 'gi'),
             parametersRe = /\@([^\!\"\#\$\%\&\'\(\)\*\+\,\.\/\:\;\<\=\>\?\@\^\`\{\|\}\[\]\-\~\s\']+)/g;
 
@@ -56,8 +58,8 @@
         }
 
         function replace(str, tokens, fn) {
-            var match, result = '',
-                tokensRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g'),
+            const tokensRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g');
+            let match, result = '',
                 startIndex = 0, endIndex = 0,
                 depth = 0;
             while (match = tokensRe.exec(str)) {
@@ -78,18 +80,18 @@
         }
 
         function stripOriginal(str) {
-            var start = tokens.start.length,
+            const start = tokens.start.length,
                 length = str.length - tokens.end.length - start;
             return str.substr(start, length);
         }
 
         function replaceOriginal(str) {
-            var matched = false,
+            let matched = false,
                 previousMatched = false,
                 matchesFound = 0;
-            var result = replace(str, tokens, function (match) {
+            const result = replace(str, tokens, function (match) {
                 matchesFound++;
-                var response = matchParameters(replaceOriginal(stripOriginal(match)));
+                const response = matchParameters(replaceOriginal(stripOriginal(match)));
 
                 if (!response.matched) {
                     return '';
@@ -115,9 +117,9 @@
         }
 
         function matchParameters(request) {
-            var allMatches = 0,
-                resolvedMatches = 0,
-                matches = request.result.match(parametersRe);
+            const matches = request.result.match(parametersRe);
+            let allMatches = 0,
+                resolvedMatches = 0;
             if (matches && matches.length) {
                 matches.forEach(function (match) {
                     allMatches++;
@@ -134,13 +136,13 @@
         }
 
         function rewriteParameters(str) {
-            var parameterIndex = 0;
+            let parameterIndex = 0;
             return str.replace(parametersRe, function (match) {
                 return options.rewriteParameter(match, parameterIndex++);
             });
         }
 
-        var response = replaceOriginal(template);
+        const response = replaceOriginal(template);
         return rewriteParameters(response.result);
     }
 
