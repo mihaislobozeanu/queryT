@@ -38,7 +38,41 @@
         }).join('|');
     };
 
-    queryT.template = function (template, options) {
+    String.prototype.replaceAsync = String.prototype.replaceAsync || function (re, callback) {
+        const str = this,
+            parts = [];
+        let i = 0;
+        if (Object.prototype.toString.call(re) == "[object RegExp]") {
+            if (re.global)
+                re.lastIndex = i;
+            let m;
+            while ((m = re.exec(str)) !== null) {
+                const args = m.concat([m.index, m.input]);
+                parts.push(str.slice(i, m.index), callback.apply(null, args));
+                i = re.lastIndex;
+                if (!re.global)
+                    break;
+                if (m[0].length == 0)
+                    re.lastIndex++;
+            }
+        } else {
+            re = String(re);
+            i = str.indexOf(re);
+            parts.push(str.slice(0, i), callback.apply(null, [re, i, str]));
+            i += re.length;
+        }
+        parts.push(str.slice(i));
+        return Promise.all(parts)
+            .then((strings) => strings.join(""));
+    }
+
+    queryT.template = async function (template, options, callback) {
+        const self = this;
+        if (!callback && !Function.isFunction(callback)) throw new Error('Missing callback parameter!');
+        queryT.templateAsync(template, options).then(result => callback(null, result)).catch(err => callback(err));
+    }
+
+    queryT.templateAsync = async function (template, options) {
 
         options = options || {};
 
@@ -57,7 +91,7 @@
             };
         }
 
-        function replace(str, tokens, fn) {
+        async function replace(str, tokens, fn) {
             const tokensRe = new RegExp(escapeToken(tokens.start) + '|' + escapeToken(tokens.end), 'g');
             let match, result = '',
                 startIndex = 0, endIndex = 0,
@@ -72,7 +106,7 @@
 
                 if (depth === 0) {
                     endIndex = match.index + tokens.end.length;
-                    result += fn(str.substring(startIndex, endIndex));
+                    result += await fn(str.substring(startIndex, endIndex));
                 }
             }
             result += str.substring(endIndex);
@@ -85,13 +119,13 @@
             return str.substr(start, length);
         }
 
-        function replaceOriginal(str) {
+        async function replaceOriginal(str) {
             let matched = false,
                 previousMatched = false,
                 matchesFound = 0;
-            const result = replace(str, tokens, function (match) {
+            const result = await replace(str, tokens, async function (match) {
                 matchesFound++;
-                const response = matchParameters(replaceOriginal(stripOriginal(match)));
+                const response = await matchParameters(await replaceOriginal(stripOriginal(match)));
 
                 if (!response.matched) {
                     return '';
@@ -116,17 +150,17 @@
             }).trim();
         }
 
-        function matchParameters(request) {
+        async function matchParameters(request) {
             const matches = request.result.match(parametersRe);
             let allMatches = 0,
                 resolvedMatches = 0;
             if (matches && matches.length) {
-                matches.forEach(function (match) {
+                for (let match of matches) {
                     allMatches++;
-                    if (options.hasParameter(match) === true) {
+                    if (await options.hasParameter(match) === true) {
                         resolvedMatches++;
                     }
-                });
+                }
                 return {
                     matched: (resolvedMatches === allMatches),
                     result: request.result
@@ -135,15 +169,15 @@
             return request;
         }
 
-        function rewriteParameters(str) {
+        async function rewriteParameters(str) {
             let parameterIndex = 0;
-            return str.replace(parametersRe, function (match) {
-                return options.rewriteParameter(match, parameterIndex++);
+            return await str.replaceAsync(parametersRe, async function (match) {
+                return await options.rewriteParameter(match, parameterIndex++);
             });
         }
 
-        const response = replaceOriginal(template);
-        return rewriteParameters(response.result);
+        const response = await replaceOriginal(template);
+        return await rewriteParameters(response.result);
     }
 
 }());
